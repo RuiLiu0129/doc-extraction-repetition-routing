@@ -1,0 +1,4 @@
+litellm>=1.0
+python-dotenv>=1.0
+datasets>=2.0
+pillow>=10.0
