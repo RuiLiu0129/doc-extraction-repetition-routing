@@ -36,8 +36,13 @@ openrouter.ai/models for the current name and update `src/check_keys.py`.
 ## 3. Download the locked datasets (no API spend)
 
 ```bash
-# CUAD (text, easiest first smoke test)
-python -c "from datasets import load_dataset; ds = load_dataset('theatticusproject/cuad', split='train'); print(len(ds))"
+# CUAD (text, easiest first smoke test) — canonical JSON from the authors'
+# GitHub repo, NOT Hugging Face: HF theatticusproject/cuad no longer ships a
+# loading script or annotations (only 511 PDFs) as of 2026-11-22.
+curl -L -o data/data.zip https://github.com/The-Atticus-Project/cuad/raw/main/data.zip
+cd data && unzip -o data.zip train_separate_questions.json test.json CUADv1.json && cd ..
+# train_separate_questions.json = 408 train docs, test.json = 102 test docs.
+python -c "import json; print(len(json.load(open('data/train_separate_questions.json'))['data']))"
 
 # Kleister Charity (PDF + OCR + value-only JSON)
 git clone https://github.com/applicaai/kleister-charity.git data/kleister-charity

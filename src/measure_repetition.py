@@ -26,49 +26,55 @@ from collections import Counter
 from step1_multipage_smoke import count_occurrences, load_cuad, norm, stratum
 
 
-def distinct_values(value, text):
-    """Approximate distinct-value detection for the conflicting stratum.
+def distinct_values(value, text, distinct=1):
+    """Distinct-value count for the conflicting stratum.
 
-    Full distinct-value enumeration needs span-level occurrence extraction
-    (find every occurrence's surrounding context and compare normalised
-    values). This Week 1 version returns 1 when the value occurs, and
-    flags the doc for the full enumeration in the batch runner. It is
-    honest about that limit in its output — do not report its stratum
-    counts as final conflicting-stratum sizes.
+    The loaders now supply it: CUAD counts distinct normalised annotated
+    answers for the label in the doc; Kleister counts distinct monetary
+    amounts sharing a line with the gold amount (money fields only).
+    This helper is kept for callers that only have a raw value and text.
     """
-    return 1 if count_occurrences(value, text) > 0 else 0
+    return distinct
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", choices=["cuad", "kleister"], required=True)
     ap.add_argument("--n", type=int, default=200)
+    ap.add_argument("--split", choices=["train", "test"], default="train")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
-    loaders = {"cuad": load_cuad}
-    if args.dataset == "kleister":
-        print("Kleister loader: see step1_multipage_smoke.load_kleister —")
-        print("fill in after the Week 1 layout check. CUAD works now.")
-        raise SystemExit(2)
-    docs = loaders[args.dataset](args.n)
+    from step1_multipage_smoke import load_kleister, norm
+
+    loaders = {"cuad": load_cuad, "kleister": load_kleister}
+    docs = loaders[args.dataset](args.n, split=args.split)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     strata = Counter()
+    by_key = {}
     with open(args.out, "w") as fout:
         for doc in docs:
+            stats = doc.get("field_stats", {})
+            norm_text = norm(doc["text"])
             for key, value in doc["gold"]:
-                n_occ = count_occurrences(value, doc["text"])
-                s = stratum(n_occ, distinct_values(value, doc["text"]))
+                n_occ = norm_text.count(norm(value)) if norm(value) and len(norm(value)) >= 2 else 0
+                fs = stats.get(key, {"distinct": 1, "n_annot": 1})
+                s = stratum(n_occ, fs["distinct"], fs["n_annot"])
                 strata[s] += 1
+                by_key.setdefault(key, Counter())[s] += 1
                 fout.write(json.dumps({
                     "doc": doc["doc_id"],
                     "key": key,
                     "value": value,
                     "occurrences": n_occ,
-                    "stratum_approx": s,
+                    "distinct": fs["distinct"],
+                    "n_annot": fs["n_annot"],
+                    "stratum": s,
                 }, ensure_ascii=False) + "\n")
-    print(f"dataset={args.dataset} docs={len(docs)}")
-    print(f"strata (approx — see distinct_values docstring): {dict(strata)}")
+    print(f"dataset={args.dataset} split={args.split} docs={len(docs)}")
+    print(f"strata (distinct values counted, design v2 §5): {dict(strata)}")
+    for key in sorted(by_key):
+        print(f"  {key}: {dict(by_key[key])}")
     print(f"-> {args.out}")
 
 

@@ -65,10 +65,10 @@ Report stratum sizes per dataset. If the conflicting stratum is <30 docs, oversa
 
 ## 6. Models (all through one OpenRouter key)
 
-| Tier | Models (verify names at run time on openrouter.ai/models) |
+| Tier | Models (verified on openrouter.ai/models, 2026-11-22) |
 |---|---|
-| Cheap | GPT-5-mini, Gemini Flash, Claude Haiku 4.5, Qwen-VL (open) |
-| Expensive | GPT-5, Gemini Pro, Claude Sonnet |
+| Cheap | GPT-5-mini (`openai/gpt-5-mini`), Gemini Flash (`google/gemini-2.5-flash`), Claude Haiku 4.5 (`anthropic/claude-haiku-4.5`), Qwen (`qwen/qwen3-235b-a22b-2507`, open — the undated `qwen3-235b-a22b` id 404s as of 2026-11-22; `qwen/qwen3-vl-235b-a22b-instruct` is the VL alternative) |
+| Expensive | GPT-5 (`openai/gpt-5`), Gemini Pro (`google/gemini-2.5-pro`), Claude Sonnet (`anthropic/claude-sonnet-4.5`; 4.6/5/5.5 also listed) |
 
 Fine-tuned small baseline (trainable only on Kleister + CUAD, which have spans/values to train on): LayoutLMv3 / BERT / RoBERTa, fine-tuned on the 300 + 200 train subsamples in §4. ExtractBench and 990 have no train split — they are test-only for all models, which is exactly the gap to report: no small fine-tuned baseline exists there yet.
 
@@ -104,6 +104,7 @@ Calibration: Platt, isotonic, fit on train, evaluate on test; plus cross-dataset
 ## 10. Metrics
 
 - Field-level F1 (normalised exact match), document-level exact-match rate — **reported by repetition stratum, not just overall**
+- Straight-through processing (STP) rate: fraction of documents where every gold field is found and correct, i.e. STP = 1 for a document only when correct count equals gold count for that document, with no missing fields. This is the automation rate: an STP = 1 document needs no human touch. Report per model, and by the repetition stratum of the document's fields. Note: on the 5-doc smoke runs (Nov 22) both gpt-5-mini and GPT-5 scored STP 0/5, which is expected at per-field accuracy near 0.4 with 3–8 fields per doc.
 - Cost per 1,000 documents, mean latency
 - Cost–accuracy curve and Pareto frontier; "spend needed to reach 99% of expensive-model F1"
 - Confidence: AUROC, ECE, risk–coverage curve (AURC)

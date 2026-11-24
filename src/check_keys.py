@@ -18,7 +18,7 @@ MODELS = [
     "openrouter/openai/gpt-5-mini",
     "openrouter/anthropic/claude-haiku-4.5",
     "openrouter/google/gemini-2.5-flash",
-    "openrouter/qwen/qwen3-235b-a22b",
+    "openrouter/qwen/qwen3-235b-a22b-2507",
     "openrouter/deepseek/deepseek-chat",
 ]
 
